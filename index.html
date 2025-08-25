@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CSV Search Engine</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input { width: 350px; padding: 10px; margin-bottom: 15px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    tr:nth-child(even) { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h2>CSV Search Engine</h2>
+  <input type="text" id="searchBox" placeholder="Search by any field...">
+
+  <table id="resultsTable"></table>
+
+  <script>
+    let csvData = [];
+
+    // Load your CSV file (acbasedata.csv in the same folder as index.html)
+    fetch("acbasedata.csv")
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            csvData = results.data;
+            displayResults(csvData); // show all rows initially
+          }
+        });
+      });
+
+    // Display results in table
+    function displayResults(data) {
+      const table = document.getElementById("resultsTable");
+      table.innerHTML = "";
+
+      if (data.length === 0) {
+        table.innerHTML = "<tr><td>No results found</td></tr>";
+        return;
+      }
+
+      // Table headers
+      const headers = Object.keys(data[0]);
+      let headerRow = "<tr>";
+      headers.forEach(h => headerRow += `<th>${h}</th>`);
+      headerRow += "</tr>";
+      table.innerHTML += headerRow;
+
+      // Table rows
+      data.forEach(row => {
+        let rowHTML = "<tr>";
+        headers.forEach(h => rowHTML += `<td>${row[h] || ""}</td>`);
+        rowHTML += "</tr>";
+        table.innerHTML += rowHTML;
+      });
+    }
+
+    // Search filter
+    document.getElementById("searchBox").addEventListener("input", function() {
+      const query = this.value.toLowerCase();
+      const filtered = csvData.filter(row =>
+        Object.values(row).some(val =>
+          String(val).toLowerCase().includes(query)
+        )
+      );
+      displayResults(filtered);
+    });
+  </script>
+</body>
+</html>
